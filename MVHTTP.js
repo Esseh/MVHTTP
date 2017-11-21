@@ -54,170 +54,199 @@
  * );
  */
 MVHTTP = {};
-(function(){
-	// Get Parameters and Default Fallback Values
-	var parameters = PluginManager.parameters("MVHTTP");
-	var hostname = parameters.hostname || "127.0.0.1";
-	var timeout = parseInt(parameters.timeout,10) || 3000;
-	
-	// Setup Plugin Commands
-	var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
-	Game_Interpreter.prototype.pluginCommand = function(command, args) {
-		_Game_Interpreter_pluginCommand.call(this, command, args);
-		if (command === "ChangeHost"){
-			hostname = args[0];
-		}
-	};
-	
-	// Helper Function, Constructs a basic XMLHttpRequest
-	function ajaxBase(method,handler,isAsync,args){
-		var xhttp = new XMLHttpRequest();
-		var dst = hostname + handler;
-		if(method=="GET" && args){
-			dst += "?";
-		}
-		xhttp.open(method,dst,isAsync);
-		return xhttp;
-	}
+(function() {
+    // Get Parameters and Default Fallback Values
+    var parameters = PluginManager.parameters("MVHTTP");
+    var hostname = parameters.hostname || "127.0.0.1";
+    var timeout = parseInt(parameters.timeout, 10) || 3000;
 
-	// Formats the arguments for GET requests
-	function makeGETArgs(args){
-        if(args === undefined){
+    // Setup Plugin Commands
+    var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
+    Game_Interpreter.prototype.pluginCommand = function(command, args) {
+        _Game_Interpreter_pluginCommand.call(this, command, args);
+        if (command === "ChangeHost") {
+            hostname = args[0];
+        }
+    };
+
+    // Helper Function, Constructs a basic XMLHttpRequest
+    function ajaxBase(method, handler, isAsync, args) {
+        var xhttp = new XMLHttpRequest();
+        var dst = hostname + handler;
+        if (method == "GET" && args) {
+            dst += "?";
+        }
+        xhttp.open(method, dst, isAsync);
+        return xhttp;
+    }
+
+    // Formats the arguments for GET requests
+    function makeGETArgs(args) {
+        if (args === undefined) {
             return "";
         }
-		return "?" + Object.keys(args).map(function(key) {
-			return key + '=' + args[key];
-		}).join('&');
-	}
-	
-	// Formats the arguments for POST requests
-	function makePOSTArgs(args){
-        if(args === undefined){
+        return "?" + Object.keys(args).map(function(key) {
+            return key + '=' + args[key];
+        }).join('&');
+    }
+
+    // Formats the arguments for POST requests
+    function makePOSTArgs(args) {
+        if (args === undefined) {
             args = {};
         }
         return JSON.stringify(args);
-	}
-	
-	// Adds asyncrhonous callbacks to asynchronous requests.
-	function xhttpCallbackDecorator(xhttp,successCallback,failureCallback){
-		xhttp.timeout = timeout;
-        if(successCallback === undefined){
-            successCallback = function(responseText){};
+    }
+
+    // Adds asyncrhonous callbacks to asynchronous requests.
+    function xhttpCallbackDecorator(xhttp, successCallback, failureCallback) {
+        xhttp.timeout = timeout;
+        if (successCallback === undefined) {
+            successCallback = function(responseText) {};
         }
-        if(failureCallback === undefined){
-            failureCallback = function(){};
+        if (failureCallback === undefined) {
+            failureCallback = function() {};
         }
-		xhttp.onreadystatechange = function(){
-			if (xhttp.readyState == 4 && xhttp.status == 200) {
-				successCallback(xhttp.responseText);
-			}
-			if (xhttp.status >= 400){
-				failureCallback();
-			}
-		};
-	}
-	
-	// Constructs the output for sycnrhonous requests.
-	function xhttpGetSynchronousResult(xhttp){
-		output = {
-			result:null,
-			error:null
-		};
-		if(xhttp.readyState == 4 && xhttp.status == 200){
-			output.result = xhttp.responseText;
-		} else {
-			output.error = xhttp.status;
-		}
-		return output;
-	}
-	
-	// Syncrhonous GET Request
-	MVHTTP.get = function(handler,args){
-		handler += makeGETArgs(args);
-		var xhttp = ajaxBase("GET",handler,false);
-		xhttp.send(null);
-		return xhttpGetSynchronousResult(xhttp);
-	};
-	
-	// Syncrhonous POST Request
-	MVHTTP.post = function(handler,args){
-		var xhttp = ajaxBase("POST",handler,false);
-		xhttp.send(makePOSTArgs(args));
-		return xhttpGetSynchronousResult(xhttp);
-	};
-	
-	// Asyncrhonous GET Request
-	MVHTTP.aget = function(handler,args,successCallback,failureCallback){
-		handler += makeGETArgs(args);
-		var xhttp = ajaxBase("GET",handler,true);
-		xhttpCallbackDecorator(xhttp,successCallback,failureCallback);
-		xhttp.send(null);
-	};
-	
-	// Asyncrhonous POST Request
-	MVHTTP.apost = function(handler,args,successCallback,failureCallback){
-		var xhttp = ajaxBase("POST",handler,true);
-		xhttpCallbackDecorator(xhttp,successCallback,failureCallback);
-		xhttp.send(makePOSTArgs(args));
-	};
-	
-	// Run tests to make sure implementaiton is correct, if neccessary plugin users can run it to make sure it runs correctly on their system.
-	// If nothing pops up then that means nothing is wrong.
-	MVHTTP.runTests = function(){
-		var configValue = hostname;
-		hostname = "https://httpbin.org/";
-		function assertEqual(id,actual,expected){
-            if(expected != actual){
+        xhttp.onreadystatechange = function() {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                successCallback(xhttp.responseText);
+            }
+            if (xhttp.status >= 400) {
+                failureCallback();
+            }
+        };
+    }
+
+    // Constructs the output for sycnrhonous requests.
+    function xhttpGetSynchronousResult(xhttp) {
+        output = {
+            result: null,
+            error: null
+        };
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            output.result = xhttp.responseText;
+        } else {
+            output.error = xhttp.status;
+        }
+        return output;
+    }
+
+    // Syncrhonous GET Request
+    MVHTTP.get = function(handler, args) {
+        handler += makeGETArgs(args);
+        var xhttp = ajaxBase("GET", handler, false);
+        xhttp.send(null);
+        return xhttpGetSynchronousResult(xhttp);
+    };
+
+    // Syncrhonous POST Request
+    MVHTTP.post = function(handler, args) {
+        var xhttp = ajaxBase("POST", handler, false);
+        xhttp.send(makePOSTArgs(args));
+        return xhttpGetSynchronousResult(xhttp);
+    };
+
+    // Asyncrhonous GET Request
+    MVHTTP.aget = function(handler, args, successCallback, failureCallback) {
+        handler += makeGETArgs(args);
+        var xhttp = ajaxBase("GET", handler, true);
+        xhttpCallbackDecorator(xhttp, successCallback, failureCallback);
+        xhttp.send(null);
+    };
+
+    // Asyncrhonous POST Request
+    MVHTTP.apost = function(handler, args, successCallback, failureCallback) {
+        var xhttp = ajaxBase("POST", handler, true);
+        xhttpCallbackDecorator(xhttp, successCallback, failureCallback);
+        xhttp.send(makePOSTArgs(args));
+    };
+
+    // Run tests to make sure implementaiton is correct, if neccessary plugin users can run it to make sure it runs correctly on their system.
+    // If nothing pops up then that means nothing is wrong.
+    MVHTTP.runTests = function() {
+        var configValue = hostname;
+        hostname = "https://httpbin.org/";
+
+        function assertEqual(id, actual, expected) {
+            if (expected != actual) {
                 alert("test " + id.toString() + " has failed");
             }
-		}
-		function assertNotEqual(id,actual,expected){
-            if(expected == actual){
+        }
+
+        function assertNotEqual(id, actual, expected) {
+            if (expected == actual) {
                 alert("test " + id.toString() + " has failed");
             }
-		}
-		function failCallback(){ alert("asyncrhonous test has failed"); }
-		// Good Null GET
-		assertEqual(1,MVHTTP.get("get").error,null);
-		assertNotEqual(1,MVHTTP.get("get").result,null);
-		// Good Empty GET
-		assertEqual(2,MVHTTP.get("get",{}).error,null);
-		assertNotEqual(2,MVHTTP.get("get",{}).result,null);
-		// Good Arbitrary GET
-		assertEqual(3,MVHTTP.get("get",{key:"value"}).error,null);
-		assertNotEqual(3,MVHTTP.get("get",{key:"value"}).result,null);
-		// Bad GET
-        assertEqual(4,MVHTTP.get("post",{key:"value"}).result,null);
-        assertNotEqual(4,MVHTTP.get("post",{key:"value"}).error,null);
-		// Good Null POST
-		assertEqual(5,MVHTTP.post("post").error,null);
-		assertNotEqual(5,MVHTTP.post("post").result,null);
-		// Good Empty POST
-		assertEqual(6,MVHTTP.post("post",{}).error,null);
-		assertNotEqual(6,MVHTTP.post("post",{}).result,null);
-		// Good Arbitrary POST
-		assertEqual(7,MVHTTP.post("post",{key:"value"}).error,null);
-		assertNotEqual(7,MVHTTP.post("post",{key:"value"}).result,null);
-		// Bad POST
-		assertEqual(8,MVHTTP.post("get",{key:"value"}).result,null);
-		assertNotEqual(8,MVHTTP.post("get",{key:"value"}).error,null);
-		// Good Async Null GET
-		MVHTTP.aget("get",undefined,undefined,failCallback);
-		// Good Async Empty GET
-		MVHTTP.aget("get",{},undefined,failCallback);
-		// Good Async Arbitrary GET
-		MVHTTP.aget("get",{key:"value"},undefined,failCallback);
-		// Bad Async GET
-		MVHTTP.aget("post",{key:"value"},failCallback);
-		// Good Async Null POST
-		MVHTTP.apost("post",undefined,undefined,failCallback);
-		// Good Async Empty POST
-		MVHTTP.apost("post",{},undefined,failCallback);
-		// Good Async Arbitrary POST
-		MVHTTP.apost("post",{key:"value"},undefined,failCallback);
-		// Bad Async POST
-		MVHTTP.apost("get",{key:"value"},failCallback);
-		hostname = configValue;
-	};
+        }
+
+        function failCallback() {
+            alert("asyncrhonous test has failed");
+        }
+        // Good Null GET
+        assertEqual(1, MVHTTP.get("get").error, null);
+        assertNotEqual(1, MVHTTP.get("get").result, null);
+        // Good Empty GET
+        assertEqual(2, MVHTTP.get("get", {}).error, null);
+        assertNotEqual(2, MVHTTP.get("get", {}).result, null);
+        // Good Arbitrary GET
+        assertEqual(3, MVHTTP.get("get", {
+            key: "value"
+        }).error, null);
+        assertNotEqual(3, MVHTTP.get("get", {
+            key: "value"
+        }).result, null);
+        // Bad GET
+        assertEqual(4, MVHTTP.get("post", {
+            key: "value"
+        }).result, null);
+        assertNotEqual(4, MVHTTP.get("post", {
+            key: "value"
+        }).error, null);
+        // Good Null POST
+        assertEqual(5, MVHTTP.post("post").error, null);
+        assertNotEqual(5, MVHTTP.post("post").result, null);
+        // Good Empty POST
+        assertEqual(6, MVHTTP.post("post", {}).error, null);
+        assertNotEqual(6, MVHTTP.post("post", {}).result, null);
+        // Good Arbitrary POST
+        assertEqual(7, MVHTTP.post("post", {
+            key: "value"
+        }).error, null);
+        assertNotEqual(7, MVHTTP.post("post", {
+            key: "value"
+        }).result, null);
+        // Bad POST
+        assertEqual(8, MVHTTP.post("get", {
+            key: "value"
+        }).result, null);
+        assertNotEqual(8, MVHTTP.post("get", {
+            key: "value"
+        }).error, null);
+        // Good Async Null GET
+        MVHTTP.aget("get", undefined, undefined, failCallback);
+        // Good Async Empty GET
+        MVHTTP.aget("get", {}, undefined, failCallback);
+        // Good Async Arbitrary GET
+        MVHTTP.aget("get", {
+            key: "value"
+        }, undefined, failCallback);
+        // Bad Async GET
+        MVHTTP.aget("post", {
+            key: "value"
+        }, failCallback);
+        // Good Async Null POST
+        MVHTTP.apost("post", undefined, undefined, failCallback);
+        // Good Async Empty POST
+        MVHTTP.apost("post", {}, undefined, failCallback);
+        // Good Async Arbitrary POST
+        MVHTTP.apost("post", {
+            key: "value"
+        }, undefined, failCallback);
+        // Bad Async POST
+        MVHTTP.apost("get", {
+            key: "value"
+        }, failCallback);
+        hostname = configValue;
+    };
 })();
 MVHTTP.runTests();
